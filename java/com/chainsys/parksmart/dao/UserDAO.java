@@ -18,7 +18,7 @@ public interface UserDAO {
 	public Integer getUserById(User user);
 
 	public void insertSpots(Spots spots, int id, String locationName, String address, String vehicleType,
-			String spotNumber);
+			String[] strArr);
 
 	public List<String> readSpotNumbers(String locationName);
 

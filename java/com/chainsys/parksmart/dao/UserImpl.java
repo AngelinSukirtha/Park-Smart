@@ -24,21 +24,6 @@ public class UserImpl implements UserDAO {
 	@Autowired
 	JdbcTemplate jdbcTemplate;
 
-//	@Override
-//	public boolean userRegistration(User user) {
-//		String selectQuery = "SELECT user_id, user_name, user_password, phone_number, email FROM user WHERE user_name=? AND user_password=? AND phone_number=? AND email=?";
-//		List<String> existingUsers = jdbcTemplate.queryForList(selectQuery, String.class, user.getUserName(),
-//				user.getUserPassword(), user.getPhoneNumber(), user.getEmail());
-//		if (!existingUsers.isEmpty()) {
-//			return false;
-//		}
-//
-//		String insertQuery = "INSERT INTO user (user_name, user_password, phone_number, email) VALUES (?, ?, ?, ?)";
-//		Object[] params = { user.getUserName(), user.getUserPassword(), user.getPhoneNumber(), user.getEmail() };
-//		int rowsAffected = jdbcTemplate.update(insertQuery, params);
-//		return rowsAffected > 0;
-//	}
-
 	@Override
 	public boolean userRegistration(User user) {
 		String selectQuery = "SELECT user_id FROM user WHERE user_name=? AND user_password=? AND phone_number=? AND email=?";
@@ -69,11 +54,25 @@ public class UserImpl implements UserDAO {
 		return jdbcTemplate.queryForObject(selectQuery, Integer.class, details);
 	}
 
+	public List<Integer> getSpotsById(int id) {
+		String selectQuery = "SELECT spot_id FROM spots WHERE user_id=?";
+		return jdbcTemplate.queryForList(selectQuery, Integer.class, id);
+	}
+
 	public void insertSpots(Spots spots, int id, String locationName, String address, String vehicleType,
-			String spotNumber) {
-		String insertQuery = "INSERT INTO spots (user_id, location, address_name, vehicle_type, spot_number, spot_status) VALUES (?, ?, ?, ?, ?, 'occupied')";
-		Object[] params = { id, locationName, address, vehicleType, spotNumber };
-		jdbcTemplate.update(insertQuery, params);
+			String[] strArr) {
+		String insertQuery = "INSERT INTO spots (user_id, location, address_name, vehicle_type, spot_number) VALUES (?, ?, ?, ?, ?)";
+		for (String spotNumber : strArr) {
+			Object[] params = { id, locationName, address, vehicleType, spotNumber };
+			jdbcTemplate.update(insertQuery, params);
+		}
+	}
+
+	public void updateSpotStatus(List<Integer> spotIdList) {
+		String updateQuery = "UPDATE spots SET spot_status = 'occupied' WHERE spot_id = ?";
+		for (Integer spotId : spotIdList) {
+			jdbcTemplate.update(updateQuery, spotId);
+		}
 	}
 
 	public List<String> readSpotNumbers(String locationName) {
@@ -121,6 +120,11 @@ public class UserImpl implements UserDAO {
 		String updateQuery = "UPDATE reservation SET reservation_status=? WHERE reservation_id = ?";
 		Object[] params = { reservation.getReservationStatus(), reservation.getReservationId() };
 		jdbcTemplate.update(updateQuery, params);
+	}
+
+	public void updateReservation(int reservationId) {
+		String updateQuery = "UPDATE reservation SET reservation_status='approved' WHERE reservation_id = ?";
+		jdbcTemplate.update(updateQuery, reservationId);
 	}
 
 	public void updateIsActive(Reservation reservation) {
@@ -347,10 +351,10 @@ public class UserImpl implements UserDAO {
 	public boolean alreadySelectedSpots(String spotNumber, String locationName) {
 		String selectQuery = "SELECT spot_number FROM spots WHERE spot_number = ? AND location = ?";
 		try {
-			return jdbcTemplate.queryForObject(selectQuery, String.class, spotNumber, locationName)!= null;
-		}catch (Exception e) {
+			return jdbcTemplate.queryForObject(selectQuery, String.class, spotNumber, locationName) != null;
+		} catch (Exception e) {
 			return false;
 		}
-		
+
 	}
 }

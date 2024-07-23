@@ -1,5 +1,6 @@
 package com.chainsys.parksmart.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -83,6 +84,7 @@ public class TransactionController {
 	@GetMapping("/payment")
 	public String handlePayment(HttpSession session, Model model, @RequestParam("cardNumber") String cardNumber,
 			@RequestParam("expiryDate") String expiryDate, @RequestParam("cvv") String cvv) {
+		int id = (int) session.getAttribute("userId");
 		transaction.setCardNumber(cardNumber);
 		transaction.setExpiryDate(expiryDate);
 		transaction.setCvv(cvv);
@@ -96,6 +98,11 @@ public class TransactionController {
 
 		userDAO.updateTransaction(transaction, reservationId);
 		userDAO.readTransactions(transaction);
+		List<String> spotNumbers = userImpl.readSpotNumber(id);
+		session.setAttribute("spotNumbers", spotNumbers);
+		List<Integer> spotId = (List<Integer>) session.getAttribute("spotId");
+		userImpl.updateSpotStatus(spotId);
+		userImpl.updateReservation(reservationId);
 
 		return "redirect:/userTransactionConfirmation";
 	}
@@ -110,14 +117,20 @@ public class TransactionController {
 		String userName = user.getUserName();
 		String phoneNumber = user.getPhoneNumber();
 		String email = user.getEmail();
-		List<String> spotNumbers = userImpl.readSpotNumber(id);
-
+		String[] strArr = (String[]) session.getAttribute("strArr");
+		List<String> spotNumbers = new ArrayList<>();
+		for (String s : strArr) {
+			spotNumbers.add(s);
+		}
 		model.addAttribute("userName", userName);
 		model.addAttribute("phoneNumber", phoneNumber);
 		model.addAttribute("email", email);
 		model.addAttribute("spotNumbers", spotNumbers);
 		model.addAttribute("price", price);
 		model.addAttribute("transactionTime", transactionTime);
+
+		model.addAttribute("paymentSuccessMessage", "Payment successful!");
+		model.addAttribute("paymentSuccessScript", true);
 
 		return "transactionConfirmation";
 	}

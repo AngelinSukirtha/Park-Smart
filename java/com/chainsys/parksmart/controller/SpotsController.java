@@ -55,12 +55,10 @@ public class SpotsController {
 	@GetMapping("/spots")
 	public String selectedSpots(HttpSession session, @RequestParam("selectedSpots") String[] selectedSpots,
 			Model model) {
-		int userId = (int) session.getAttribute("userId");
 		int locationId = (int) session.getAttribute("locationId");
 		String locationName = userImpl.getLocationByLocationId(locationId);
 		spots.setLocation(locationName);
-		String address = (String) session.getAttribute("address");
-
+		StringBuilder strBuilder = new StringBuilder();
 		long validSpotCount = Arrays.stream(selectedSpots)
 				.map(spotNumber -> spotNumber.substring(1, spotNumber.length() - 1))
 				.flatMap(spotString -> Arrays.stream(spotString.split("\",\"")))
@@ -71,22 +69,31 @@ public class SpotsController {
 					case 'T' -> "Truck";
 					default -> null;
 					};
-
+					strBuilder.append(spot);
+					strBuilder.append(",");
 					spots.setVehicleType(vehicleType);
 					session.setAttribute("vehicleType", vehicleType);
 					if (!userImpl.alreadySelectedSpots(spot, locationName)) {
-						userDAO.insertSpots(spots, userId, locationName, address, vehicleType, spot);
 					}
 
 				}).count();
+
+		String[] strArr = strBuilder.toString().split(",");
+
+		for (String s : strArr) {
+			System.out.println("---:" + s);
+		}
+
+		session.setAttribute("strArr", strArr);
+
 		spots.setCountSpotNumber((int) validSpotCount);
 		session.setAttribute("countSpotNumber", validSpotCount);
 
 		return "reservation";
 	}
 
-	@GetMapping("address1")
-	public String showAddAddress1(Model model, HttpSession session) {
+	@GetMapping("backAddress")
+	public String showAddress(Model model, HttpSession session) {
 		int locationId = (int) session.getAttribute("locationId");
 		String locationName = userImpl.getLocationByLocationId(locationId);
 		spots.setLocation(locationName);
